@@ -1,4 +1,8 @@
 # Followed video tutorial
 # @see https://www.youtube.com/watch?v=_B093QdDO7g
 packages:
-    - "apps/*"
+  - "apps/*"
+  - "bookmarklets/*"
+allowBuilds:
+  esbuild: true
+  unrs-resolver: true

@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>video-grabber sandbox</title>
+    <style>
+      /* Deliberately messy host-page styles, to stress-test panel isolation. */
+      * {
+        box-sizing: content-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: Georgia, serif;
+        background: #0b1220;
+        color: #e5e7eb;
+        padding: 40px;
+        line-height: 1.6;
+      }
+      button {
+        all: unset;
+        cursor: pointer;
+      }
+      input {
+        border: 4px dashed red;
+      }
+      h1 {
+        font-size: 28px;
+        margin-bottom: 16px;
+      }
+      p {
+        margin-bottom: 12px;
+        max-width: 60ch;
+      }
+      .toolbar {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+      .toolbar button {
+        background: #1f2937;
+        color: #fff;
+        padding: 8px 14px;
+        border-radius: 6px;
+      }
+      video {
+        width: 480px;
+        max-width: 100%;
+        background: #000;
+        display: block;
+        margin-bottom: 24px;
+      }
+      .site-banner {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: crimson;
+        color: white;
+        padding: 6px 12px;
+        z-index: 999999;
+        font-weight: bold;
+      }
+      .spacer {
+        height: 32px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="site-banner">
+      Mock host page — deliberately messy CSS (content-box, unset buttons, red input borders, a
+      high z-index banner) to stress-test the shadow-DOM panel below.
+    </div>
+    <div class="spacer"></div>
+
+    <h1>video-grabber sandbox</h1>
+
+    <div class="toolbar">
+      <button id="run-btn" type="button">Run bookmarklet</button>
+      <button id="add-video-btn" type="button">Add a lazy-loaded video</button>
+    </div>
+
+    <p>
+      Reloading this page re-runs the script automatically. "Run bookmarklet" re-injects it
+      without a reload, like clicking the bookmark again. Edit <code>src/index.ts</code> and save
+      to see changes live.
+    </p>
+
+    <video controls>
+      <source src="./fixtures/sample.mp4" type="video/mp4" />
+    </video>
+
+    <video controls>
+      <source src="./fixtures/stream/playlist.m3u8" type="application/x-mpegURL" />
+    </video>
+
+    <div id="lazy-video-slot"></div>
+
+    <script>
+      // Blob-sourced video — should surface as an "in-page stream" candidate.
+      const blobVideo = document.createElement("video");
+      blobVideo.controls = true;
+      blobVideo.src = URL.createObjectURL(new Blob(["fake"], { type: "video/mp4" }));
+      document.body.appendChild(blobVideo);
+
+      // A network request matched by the file-extension pattern, so the
+      // network-activity scan path has something to find even though no
+      // <video> tag on the page references it.
+      fetch("./fixtures/network-only.mp4").catch(() => {});
+
+      document.getElementById("run-btn").addEventListener("click", () => {
+        const s = document.createElement("script");
+        s.src = "index.js?t=" + Date.now();
+        document.body.appendChild(s);
+      });
+
+      document.getElementById("add-video-btn").addEventListener("click", () => {
+        const v = document.createElement("video");
+        v.controls = true;
+        v.innerHTML = '<source src="./fixtures/lazy.mp4" type="video/mp4" />';
+        document.getElementById("lazy-video-slot").appendChild(v);
+      });
+    </script>
+
+    <script src="index.js"></script>
+  </body>
+</html>
